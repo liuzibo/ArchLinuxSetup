@@ -3,7 +3,7 @@
 set -euo pipefail
 
 
-# 颜色输出定义（增强可读性）
+# 颜色输出定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -13,11 +13,16 @@ NC='\033[0m'
 # 配置项
 SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9ZBbCFAxUJ4O5+dEO2QWVz0viCHqd4wcR9dFHM80uE liuzibo@DESKTOP-3I1U4UB"
 
-BASIC_PACKAGES=("fish" "wget" "vim" "git" "clash")
+BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk")
 
+
+# 定义路径常量
 USER_HOME=$(eval echo ~$(logname))
 
 FISH_CONFIG_FILE="$USER_HOME/.config/fish/config.fish"
+
+SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
+
 
 # ===================== 通用工具函数 =====================
 info() {
@@ -37,9 +42,11 @@ error() {
 # 检查sudo权限
 check_sudo() {
     if ! sudo -v >/dev/null 2>&1; then
-        error "需要sudo权限执行该操作，请确保当前用户已配置sudo权限"
+        error "没有Root权限"
     fi
 }
+
+
 
 # ===================== 功能函数 =====================
 
@@ -57,8 +64,8 @@ install_ssh_key() {
 
     # 写入公钥
     # 如果已经存在，则跳过
-    if ! grep -q "$SSH_PUB_KEY" "$USER_HOME/.ssh/authorized_keys"; then
-        echo "$SSH_PUB_KEY" >> "$USER_HOME/.ssh/authorized_keys"
+    if [ ! -f $SSH_CONFIG_FILE ] || ! grep -q "$SSH_PUB_KEY" $SSH_CONFIG_FILE; then
+        echo "$SSH_PUB_KEY" >> $SSH_CONFIG_FILE
     fi
 
     info "SSH密钥配置完成"
@@ -68,7 +75,6 @@ install_ssh_key() {
 install_common_softwares() {
     info "开始安装常用软件..."
     
-    info "更新pacman缓存..."
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
 
     # 安装软件
@@ -77,9 +83,11 @@ install_common_softwares() {
     info "常用软件安装完成"
 }
 
-# 3. 设置默认Shell为fish
-set_default_shell() {
-    info "开始配置默认Shell..."
+# 3. 安装Fish
+install_fish() {
+    info "开始安装Fish..."
+
+    sudo pacman -S --needed --noconfirm fish >/dev/null 2>&1
 
     # 设置默认shell
     sudo usermod -s /usr/bin/fish $(logname) >/dev/null 2>&1
@@ -91,24 +99,34 @@ set_default_shell() {
         echo "set fish_greeting" >> $FISH_CONFIG_FILE
     fi
 
-    info "fish Shell配置完成"
+    fish -c "alias del 'mkdir -p $USER_HOME/.trash; mv -t $USER_HOME/.trash'; funcsave del" > /dev/null 2>&1
+    fish -c "alias updata 'sudo pacman -Syu'; funcsave updata" > /dev/null 2>&1
+    fish -c "alias cls 'clear'; funcsave cls" > /dev/null 2>&1
+
+
+
+    info "Fish安装完成"
 }
 
-# 4. 配置Git全局信息
-config_git() {
-    info "开始配置Git全局信息..."
+# 4. 安装Git
+install_git() {
+    info "开始安装Git..."
+
+    sudo pacman -S --needed --noconfirm git >/dev/null 2>&1
 
     # 设置全局用户名和邮箱
     git config --global user.name "liuzibo"
     git config --global user.email "liuzibo1925@outlook.com"
 
-    info "Git配置完成"
+    info "Git安装完成"
 }
 
 # 5. 安装并配置Clash服务
-config_clash() {
-    info "开始配置Clash服务..."
-    
+install_clash() {
+    info "开始安装Clash..."
+
+    sudo pacman -S --needed --noconfirm clash >/dev/null 2>&1
+
     local TEMP_FILE="/tmp/clash.service"
     local SERVICE_DIR="/etc/systemd/system/"
 
@@ -126,12 +144,6 @@ EOF
     sudo mv "$TEMP_FILE" "$SERVICE_DIR"
     sudo systemctl enable clash.service
 
-    info "Clash服务配置完成"
-}
-
-# 6. 配置代理
-config_proxy() {
-    info "开始配置代理..."
 
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
@@ -145,10 +157,76 @@ end
 EOF
     fi
 
-    info "代理配置完成"
+    info "Clash安装完成"
 }
 
-# 7. 安装并配置Miniconda
+# 6. 安装并配置Docker
+install_docker() {
+    info "开始安装Docker..."
+
+    # 安装Docker
+    sudo pacman -S --needed --noconfirm docker >/dev/null 2>&1    
+
+    # 添加Docker配置
+    sudo mkdir -p /etc/docker
+    local TEMP_FILE="/tmp/daemon.json"
+
+    sudo cat > $TEMP_FILE << EOF
+{
+    "proxies": {
+        "http-proxy": "http://127.0.0.1:7890",
+        "https-proxy": "http://127.0.0.1:7890"
+    }
+}
+EOF
+    sudo mv $TEMP_FILE /etc/docker/daemon.json
+
+    # 设置开机自启
+    sudo systemctl enable docker.socket
+
+    info "Docker安装完成"
+}
+
+# 7. 安装并配置MariaDB
+install_mariadb() {
+    info "开始安装MariaDB..."
+
+    if [ -d "/var/lib/mysql" ]; then
+        info "MariaDB已安装, 跳过安装"
+        return
+    fi
+
+    # 安装MariaDB
+    sudo pacman -S --needed --noconfirm mariadb >/dev/null 2>&1    
+
+    # 设置数据库文件夹不可压缩
+    sudo chattr +C /var/lib/mysql >/dev/null 2>&1
+
+    # 初始化数据库
+    sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql >/dev/null 2>&1
+
+    # 设置开机自启
+    sudo systemctl enable mariadb
+
+    info "MariaDB安装完成"
+
+}
+
+# 8. 安装并配置Nginx
+install_nginx() {
+    info "开始安装Nginx..."
+
+
+    # 安装Nginx
+    sudo pacman -S --needed --noconfirm nginx >/dev/null 2>&1    
+
+    # 设置开机自启
+    sudo systemctl enable nginx
+
+    info "Nginx安装完成"
+}
+
+# 9. 安装并配置Miniconda
 install_miniconda() {
     info "开始安装Miniconda..."
 
@@ -158,7 +236,7 @@ install_miniconda() {
     local TMP_DIR=$(mktemp -d)  # 创建临时目录
     # 如果已经安装，直接返回
     if [ -d "$INSTALL_DIR" ]; then
-        info "Miniconda已安装，跳过安装"
+        info "Miniconda已安装, 跳过安装"
         return
     fi
 
@@ -193,21 +271,25 @@ main() {
     # 2. 安装常用软件
     install_common_softwares
 
-    # 3. 设置默认Shell
-    set_default_shell
+    # 3. 安装Fish
+    install_fish
 
-    # 4. 配置Git全局信息
-    config_git
+    # 4. 安装Git
+    install_git
 
     # 5. 安装并配置Clash服务
-    config_clash
+    install_clash
 
+    # 6. 安装并配置Docker
+    install_docker
 
-    # 6. 开始配置代理
-    config_proxy
+    # 7. 安装并配置MariaDB
+    install_mariadb
 
+    # 8. 安装并配置Nginx
+    install_nginx
 
-    # 7. 安装并配置Miniconda
+    # 9. 安装并配置Miniconda
     install_miniconda
 }
 
