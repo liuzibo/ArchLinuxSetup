@@ -73,6 +73,11 @@ install_ssh_key() {
 install_common_softwares() {
     info "2. 开始安装常用软件..."
     
+    mkdir -p "$USER_HOME/software"
+    mkdir -p "$USER_HOME/code"
+    mkdir -p "$USER_HOME/code/java"
+    mkdir -p "$USER_HOME/code/oss"
+
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
 
     # 安装软件
