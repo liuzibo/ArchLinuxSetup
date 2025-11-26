@@ -52,7 +52,7 @@ check_sudo() {
 
 # 1. 安装SSH公钥
 install_ssh_key() {
-    info "开始配置SSH密钥..."
+    info "1. 开始配置SSH密钥..."
 
     # 创建SSH目录    
     mkdir -p "$USER_HOME/.ssh" 
@@ -67,26 +67,28 @@ install_ssh_key() {
     if [ ! -f $SSH_CONFIG_FILE ] || ! grep -q "$SSH_PUB_KEY" $SSH_CONFIG_FILE; then
         echo "$SSH_PUB_KEY" >> $SSH_CONFIG_FILE
     fi
-
-    info "SSH密钥配置完成"
 }
 
 # 2. 安装常用软件
 install_common_softwares() {
-    info "开始安装常用软件..."
+    info "2. 开始安装常用软件..."
     
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
 
     # 安装软件
     sudo pacman -S --needed --noconfirm "${BASIC_PACKAGES[@]}" >/dev/null 2>&1
-
-    info "常用软件安装完成"
 }
 
 # 3. 安装Fish
 install_fish() {
-    info "开始安装Fish..."
+    info "3. 开始安装Fish..."
 
+    if [ -f $FISH_CONFIG_FILE ]; then
+        info "Fish已安装, 跳过安装"
+        return
+    fi
+
+    # 安装Fish
     sudo pacman -S --needed --noconfirm fish >/dev/null 2>&1
 
     # 设置默认shell
@@ -99,18 +101,17 @@ install_fish() {
         echo "set fish_greeting" >> $FISH_CONFIG_FILE
     fi
 
+    # 添加常用别名
     fish -c "alias del 'mkdir -p $USER_HOME/.trash; mv -t $USER_HOME/.trash'; funcsave del" > /dev/null 2>&1
-    fish -c "alias updata 'sudo pacman -Syu'; funcsave updata" > /dev/null 2>&1
-    fish -c "alias cls 'clear'; funcsave cls" > /dev/null 2>&1
+    fish -c "alias update 'sudo pacman -Syu'; funcsave update" > /dev/null 2>&1
+    fish -c "alias shutdown 'sudo shutdown -h now'; funcsave shutdown" > /dev/null 2>&1
+    fish -c "alias reboot 'sudo reboot'; funcsave reboot" > /dev/null 2>&1
 
-
-
-    info "Fish安装完成"
 }
 
 # 4. 安装Git
 install_git() {
-    info "开始安装Git..."
+    info "4. 开始安装Git..."
 
     sudo pacman -S --needed --noconfirm git >/dev/null 2>&1
 
@@ -118,12 +119,11 @@ install_git() {
     git config --global user.name "liuzibo"
     git config --global user.email "liuzibo1925@outlook.com"
 
-    info "Git安装完成"
 }
 
 # 5. 安装并配置Clash服务
 install_clash() {
-    info "开始安装Clash..."
+    info "5. 开始安装Clash..."
 
     sudo pacman -S --needed --noconfirm clash >/dev/null 2>&1
 
@@ -144,7 +144,6 @@ EOF
     sudo mv "$TEMP_FILE" "$SERVICE_DIR"
     sudo systemctl enable clash.service
 
-
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
 function proxy
@@ -156,13 +155,11 @@ function noproxy
 end
 EOF
     fi
-
-    info "Clash安装完成"
 }
 
 # 6. 安装并配置Docker
 install_docker() {
-    info "开始安装Docker..."
+    info "6. 开始安装Docker..."
 
     # 安装Docker
     sudo pacman -S --needed --noconfirm docker >/dev/null 2>&1    
@@ -184,12 +181,11 @@ EOF
     # 设置开机自启
     sudo systemctl enable docker.socket
 
-    info "Docker安装完成"
 }
 
 # 7. 安装并配置MariaDB
 install_mariadb() {
-    info "开始安装MariaDB..."
+    info "7. 开始安装MariaDB..."
 
     if [ -d "/var/lib/mysql" ]; then
         info "MariaDB已安装, 跳过安装"
@@ -206,39 +202,53 @@ install_mariadb() {
     sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql >/dev/null 2>&1
 
     # 设置开机自启
-    sudo systemctl enable mariadb
+    sudo systemctl enable mariadb.service
+    sudo systemctl start mariadb.service
 
-    info "MariaDB安装完成"
+    # 配置用户
+
+    sudo mariadb -u root -p201654 -e "CREATE USER 'liuzibo'@'localhost' IDENTIFIED BY '201654';"
+    sudo mariadb -u root -p201654 -e "CREATE USER 'liuzibo'@'%' IDENTIFIED BY '201654';"
+    sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'localhost';"
+    sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'%';"
+    sudo mariadb -u root -p201654 -e "FLUSH PRIVILEGES;"
 
 }
 
 # 8. 安装并配置Nginx
 install_nginx() {
-    info "开始安装Nginx..."
-
+    info "8. 开始安装Nginx..."
+    
+    if [ -d "/etc/nginx" ]; then
+        info "Nginx已安装, 跳过安装"
+        return
+    fi
 
     # 安装Nginx
     sudo pacman -S --needed --noconfirm nginx >/dev/null 2>&1    
 
     # 设置开机自启
-    sudo systemctl enable nginx
+    sudo systemctl enable nginx.service
+    sudo systemctl start nginx.service
 
-    info "Nginx安装完成"
 }
 
 # 9. 安装并配置Miniconda
 install_miniconda() {
-    info "开始安装Miniconda..."
+    info "9. 开始安装Miniconda..."
 
-    # 定义参数
-    local MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
     local INSTALL_DIR="$USER_HOME/software/miniconda"
-    local TMP_DIR=$(mktemp -d)  # 创建临时目录
+
     # 如果已经安装，直接返回
     if [ -d "$INSTALL_DIR" ]; then
         info "Miniconda已安装, 跳过安装"
         return
     fi
+
+    # 定义参数
+    local MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    local TMP_DIR=$(mktemp -d)  # 创建临时目录
+
 
     # 下载安装脚本
     info "下载Miniconda安装脚本到临时目录: $TMP_DIR"
@@ -246,18 +256,14 @@ install_miniconda() {
 
     # 赋予执行权限并安装
     chmod +x "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
-    info "安装Miniconda到: $INSTALL_DIR"
     bash "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh" -b -p "$INSTALL_DIR"
 
     # 配置conda
-    info "配置Conda环境..."
     $INSTALL_DIR/bin/conda init fish
     $INSTALL_DIR/bin/conda config --set auto_activate false
 
     # 清理临时文件
     rm -rf "$TMP_DIR"
-
-    info "Miniconda安装配置完成"
 }
 
 # ===================== 主执行流程 =====================
