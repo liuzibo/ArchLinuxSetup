@@ -28,7 +28,7 @@ error() {
 # 配置项
 SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9ZBbCFAxUJ4O5+dEO2QWVz0viCHqd4wcR9dFHM80uE liuzibo@DESKTOP-3I1U4UB"
 
-BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "cifs-utils" "fastfetch")
+BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "cifs-utils" "fastfetch" "htop")
 
 
 # 定义路径常量
