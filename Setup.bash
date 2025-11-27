@@ -10,20 +10,6 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 
-# 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9ZBbCFAxUJ4O5+dEO2QWVz0viCHqd4wcR9dFHM80uE liuzibo@DESKTOP-3I1U4UB"
-
-BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk")
-
-
-# 定义路径常量
-USER_HOME=$(eval echo ~$(logname))
-
-FISH_CONFIG_FILE="$USER_HOME/.config/fish/config.fish"
-
-SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
-
-
 # ===================== 通用工具函数 =====================
 info() {
     echo -e "$GREEN[INFO]$NC $1"
@@ -37,6 +23,21 @@ error() {
     echo -e "$RED[ERROR]$NC $1"
     exit 1
 }
+
+
+# 配置项
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9ZBbCFAxUJ4O5+dEO2QWVz0viCHqd4wcR9dFHM80uE liuzibo@DESKTOP-3I1U4UB"
+
+BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "cifs-utils" "fastfetch")
+
+
+# 定义路径常量
+USER_HOME=$(eval echo ~$(logname))
+
+FISH_CONFIG_FILE="$USER_HOME/.config/fish/config.fish"
+
+SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
+
 
 
 # 检查sudo权限
@@ -111,7 +112,9 @@ install_fish() {
     fish -c "alias update 'sudo pacman -Syu'; funcsave update" > /dev/null 2>&1
     fish -c "alias shutdown 'sudo shutdown -h now'; funcsave shutdown" > /dev/null 2>&1
     fish -c "alias reboot 'sudo reboot'; funcsave reboot" > /dev/null 2>&1
-
+    fish -c "alias mount 'sudo mkdir -p /mnt/smb; sudo mount -t cifs //192.168.208.1/liuzibo /mnt/smb -o user=liuzibo1925@outlook.com,password=Aliu1019zeber.,vers=3.0'; funcsave mount" > /dev/null 2>&1
+    fish -c "alias umount 'sudo umount /mnt/smb'; funcsave umount" > /dev/null 2>&1
+    
 }
 
 # 4. 安装Git
@@ -147,7 +150,7 @@ ExecStart=/usr/bin/clash -d /home/liuzibo/.config/clash/
 WantedBy=multi-user.target
 EOF
     sudo mv "$TEMP_FILE" "$SERVICE_DIR"
-    sudo systemctl enable clash.service
+    sudo systemctl enable clash.service >/dev/null 2>&1
 
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
@@ -184,7 +187,7 @@ EOF
     sudo mv $TEMP_FILE /etc/docker/daemon.json
 
     # 设置开机自启
-    sudo systemctl enable docker.socket
+    sudo systemctl enable docker.socket >/dev/null 2>&1
 
 }
 
@@ -207,8 +210,8 @@ install_mariadb() {
     sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql >/dev/null 2>&1
 
     # 设置开机自启
-    sudo systemctl enable mariadb.service
-    sudo systemctl start mariadb.service
+    sudo systemctl enable mariadb.service > /dev/null 2>&1
+    sudo systemctl start mariadb.service > /dev/null 2>&1
 
     # 配置用户
 
@@ -233,8 +236,8 @@ install_nginx() {
     sudo pacman -S --needed --noconfirm nginx >/dev/null 2>&1    
 
     # 设置开机自启
-    sudo systemctl enable nginx.service
-    sudo systemctl start nginx.service
+    sudo systemctl enable nginx.service >/dev/null 2>&1
+    sudo systemctl start nginx.service >/dev/null 2>&1
 
 }
 
@@ -261,7 +264,7 @@ install_miniconda() {
 
     # 赋予执行权限并安装
     chmod +x "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
-    bash "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh" -b -p "$INSTALL_DIR"
+    bash "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh" -b -p "$INSTALL_DIR" >/dev/null 2>&1
 
     # 配置conda
     $INSTALL_DIR/bin/conda init fish
