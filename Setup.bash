@@ -55,7 +55,11 @@ check_sudo() {
 install_ssh_key() {
     info "1. 开始配置SSH密钥..."
 
-    # 创建SSH目录    
+    sudo pacman -Syu --noconfirm >/dev/null 2>&1
+    sudo pacman -S --needed --noconfirm openssh >/dev/null 2>&1
+    sudo systemctl enable sshd >/dev/null 2>&1
+
+    # 创建SSH目录
     mkdir -p "$USER_HOME/.ssh" 
 
     # 如果不存在，则配置SSH密钥
@@ -77,6 +81,7 @@ install_common_softwares() {
     mkdir -p "$USER_HOME/software"
     mkdir -p "$USER_HOME/code"
     mkdir -p "$USER_HOME/code/java"
+    mkdir -p "$USER_HOME/code/go"
     mkdir -p "$USER_HOME/code/oss"
 
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
@@ -150,7 +155,7 @@ ExecStart=/usr/bin/clash -d /home/liuzibo/.config/clash/
 WantedBy=multi-user.target
 EOF
     sudo mv "$TEMP_FILE" "$SERVICE_DIR"
-    sudo systemctl enable clash.service >/dev/null 2>&1
+    # sudo systemctl enable clash.service >/dev/null 2>&1
 
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
@@ -241,9 +246,23 @@ install_nginx() {
 
 }
 
-# 9. 安装并配置Miniconda
+
+# 9. 安装并配置Go
+install_go() {
+    info "9. 开始安装Go..."
+
+    sudo pacman -S --needed --noconfirm go >/dev/null 2>&1
+
+    # 设置环境变量
+    go env -w GO111MODULE=on
+    go env -w GOPROXY=https://goproxy.cn,direct
+    go env -w GOPATH=/home/liuzibo/code/go
+}
+
+
+# 10. 安装并配置Miniconda
 install_miniconda() {
-    info "9. 开始安装Miniconda..."
+    info "10. 开始安装Miniconda..."
 
     local INSTALL_DIR="$USER_HOME/software/miniconda"
 
@@ -267,8 +286,8 @@ install_miniconda() {
     bash "$TMP_DIR/Miniconda3-latest-Linux-x86_64.sh" -b -p "$INSTALL_DIR" >/dev/null 2>&1
 
     # 配置conda
-    $INSTALL_DIR/bin/conda init fish
-    $INSTALL_DIR/bin/conda config --set auto_activate false
+    $INSTALL_DIR/bin/conda init fish >/dev/null 2>&1
+    $INSTALL_DIR/bin/conda config --set auto_activate false >/dev/null 2>&1
 
     # 清理临时文件
     rm -rf "$TMP_DIR"
@@ -303,8 +322,13 @@ main() {
     # 8. 安装并配置Nginx
     install_nginx
 
-    # 9. 安装并配置Miniconda
+    # 9. 安装并配置Go
+    install_go
+
+    # 10. 安装并配置Miniconda
     install_miniconda
+
+    info "系统设置完成"
 }
 
 main
