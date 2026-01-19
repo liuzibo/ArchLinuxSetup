@@ -26,9 +26,9 @@ error() {
 
 
 # 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9ZBbCFAxUJ4O5+dEO2QWVz0viCHqd4wcR9dFHM80uE liuzibo@DESKTOP-3I1U4UB"
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILhfO9M9/mgtCTh9PPYUd0eOrDKxIfZKsSuFpXS+xomp liuzibo@liuzibos-MacBook-Pro.local"
 
-BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "cifs-utils" "fastfetch" "htop")
+BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop")
 
 
 # 定义路径常量
@@ -50,10 +50,7 @@ check_sudo() {
 
 
 # ===================== 功能函数 =====================
-
-# 1. 安装SSH公钥
 install_ssh_key() {
-    info "1. 开始配置SSH密钥..."
 
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
     sudo pacman -S --needed --noconfirm openssh >/dev/null 2>&1
@@ -73,27 +70,28 @@ install_ssh_key() {
         echo "$SSH_PUB_KEY" >> $SSH_CONFIG_FILE
     fi
 }
+install_ssh_key
 
 # 2. 安装常用软件
 install_common_softwares() {
-    info "2. 开始安装常用软件..."
     
     mkdir -p "$USER_HOME/software"
     mkdir -p "$USER_HOME/code"
     mkdir -p "$USER_HOME/code/java"
     mkdir -p "$USER_HOME/code/go"
     mkdir -p "$USER_HOME/code/oss"
+    mkdir -p "$USER_HOME/code/setup"
 
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
 
     # 安装软件
     sudo pacman -S --needed --noconfirm "${BASIC_PACKAGES[@]}" >/dev/null 2>&1
 }
+install_common_softwares
+
 
 # 3. 安装Fish
 install_fish() {
-    info "3. 开始安装Fish..."
-
     if [ -f $FISH_CONFIG_FILE ]; then
         info "Fish已安装, 跳过安装"
         return
@@ -117,14 +115,25 @@ install_fish() {
     fish -c "alias update 'sudo pacman -Syu'; funcsave update" > /dev/null 2>&1
     fish -c "alias shutdown 'sudo shutdown -h now'; funcsave shutdown" > /dev/null 2>&1
     fish -c "alias reboot 'sudo reboot'; funcsave reboot" > /dev/null 2>&1
-    fish -c "alias mount 'sudo mkdir -p /mnt/smb; sudo mount -t cifs //192.168.208.1/liuzibo /mnt/smb -o user=liuzibo1925@outlook.com,password=Aliu1019zeber.,vers=3.0'; funcsave mount" > /dev/null 2>&1
-    fish -c "alias umount 'sudo umount /mnt/smb'; funcsave umount" > /dev/null 2>&1
-    
 }
+install_fish
 
-# 4. 安装Git
+
+install_davfs() {
+    sudo pacman -S --needed --noconfirm davfs2 >/dev/null 2>&1
+
+    if ! sudo grep -q "http://192.168.100.129:5005/ liuzibo Aliu1019zeber." /etc/davfs2/secrets; then
+        echo "http://192.168.100.129:5005/ liuzibo Aliu1019zeber." | sudo tee -a /etc/davfs2/secrets > /dev/null 2>&1
+    fi
+
+    sudo mkdir -p /mnt/dav
+    fish -c "alias mount 'sudo mount -t davfs http://192.168.100.129:5005/ /mnt/dav'; funcsave mount" > /dev/null 2>&1
+    fish -c "alias umount 'sudo umount /mnt/dav'; funcsave umount" > /dev/null 2>&1
+}
+install_davfs
+
+
 install_git() {
-    info "4. 开始安装Git..."
 
     sudo pacman -S --needed --noconfirm git >/dev/null 2>&1
 
@@ -133,10 +142,10 @@ install_git() {
     git config --global user.email "liuzibo1925@outlook.com"
 
 }
+install_git
 
 # 5. 安装并配置Clash服务
 install_clash() {
-    info "5. 开始安装Clash..."
 
     sudo pacman -S --needed --noconfirm clash >/dev/null 2>&1
 
@@ -169,10 +178,9 @@ end
 EOF
     fi
 }
+install_clash
 
-# 6. 安装并配置Docker
 install_docker() {
-    info "6. 开始安装Docker..."
 
     # 安装Docker
     sudo pacman -S --needed --noconfirm docker >/dev/null 2>&1    
@@ -195,10 +203,10 @@ EOF
     sudo systemctl enable docker.socket >/dev/null 2>&1
 
 }
+install_docker
 
-# 7. 安装并配置MariaDB
+
 install_mariadb() {
-    info "7. 开始安装MariaDB..."
 
     if [ -d "/var/lib/mysql" ]; then
         info "MariaDB已安装, 跳过安装"
@@ -225,12 +233,10 @@ install_mariadb() {
     sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'localhost';"
     sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'%';"
     sudo mariadb -u root -p201654 -e "FLUSH PRIVILEGES;"
-
 }
+install_mariadb
 
-# 8. 安装并配置Nginx
 install_nginx() {
-    info "8. 开始安装Nginx..."
     
     if [ -d "/etc/nginx" ]; then
         info "Nginx已安装, 跳过安装"
@@ -238,18 +244,16 @@ install_nginx() {
     fi
 
     # 安装Nginx
-    sudo pacman -S --needed --noconfirm nginx >/dev/null 2>&1    
+    sudo pacman -S --needed --noconfirm nginx-mainline >/dev/null 2>&1    
 
     # 设置开机自启
     sudo systemctl enable nginx.service >/dev/null 2>&1
     sudo systemctl start nginx.service >/dev/null 2>&1
-
 }
+install_nginx
 
 
-# 9. 安装并配置Go
 install_go() {
-    info "9. 开始安装Go..."
 
     sudo pacman -S --needed --noconfirm go >/dev/null 2>&1
 
@@ -258,11 +262,10 @@ install_go() {
     go env -w GOPROXY=https://goproxy.cn,direct
     go env -w GOPATH=/home/liuzibo/code/go
 }
+install_go
 
 
-# 10. 安装并配置Miniconda
 install_miniconda() {
-    info "10. 开始安装Miniconda..."
 
     local INSTALL_DIR="$USER_HOME/software/miniconda"
 
@@ -292,43 +295,4 @@ install_miniconda() {
     # 清理临时文件
     rm -rf "$TMP_DIR"
 }
-
-# ===================== 主执行流程 =====================
-main() {
-    # 检查sudo权限
-    check_sudo
-
-    # 1. 安装SSH公钥
-    install_ssh_key
-
-    # 2. 安装常用软件
-    install_common_softwares
-
-    # 3. 安装Fish
-    install_fish
-
-    # 4. 安装Git
-    install_git
-
-    # 5. 安装并配置Clash服务
-    install_clash
-
-    # 6. 安装并配置Docker
-    install_docker
-
-    # 7. 安装并配置MariaDB
-    install_mariadb
-
-    # 8. 安装并配置Nginx
-    install_nginx
-
-    # 9. 安装并配置Go
-    install_go
-
-    # 10. 安装并配置Miniconda
-    install_miniconda
-
-    info "系统设置完成"
-}
-
-main
+install_miniconda
