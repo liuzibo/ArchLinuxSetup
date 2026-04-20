@@ -266,7 +266,7 @@ install_opencode(){
 
     sudo pacman -S --needed --noconfirm opencode >/dev/null 2>&1
     # 设置API
-    sudo mkdir -p $USER_HOME/.config/opencode/
+    mkdir -p $USER_HOME/.config/opencode/
 
     cat > $USER_HOME/.config/opencode/opencode.json << EOF
 {
