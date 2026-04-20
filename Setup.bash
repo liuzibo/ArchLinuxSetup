@@ -270,7 +270,7 @@ install_opencode(){
 
     cat > $USER_HOME/.config/opencode/opencode.json << EOF
 {
-  "$schema": "https://opencode.ai/config.json",
+  "\$schema": "https://opencode.ai/config.json",
   "model": "baidu/glm-5.1",
   "provider": {
     "baidu": {
