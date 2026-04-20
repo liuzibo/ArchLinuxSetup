@@ -26,7 +26,7 @@ error() {
 
 
 # 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILhfO9M9/mgtCTh9PPYUd0eOrDKxIfZKsSuFpXS+xomp liuzibo@liuzibos-MacBook-Pro.local"
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM7ZRY5p7YOXqaqCelSQUmo05+EKkhgL70Q6l3dQAIDh liuzibo@DESKTOP-7JL03RK"
 
 BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop")
 
@@ -38,12 +38,14 @@ FISH_CONFIG_FILE="$USER_HOME/.config/fish/config.fish"
 
 SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
 
+OPENCODE_CONFIG_FILE="$USER_HOME/.config/opencode/opencode.json"
+
 
 
 # 检查sudo权限
 check_sudo() {
     if ! sudo -v >/dev/null 2>&1; then
-        error "没有Root权限"
+        error "No sudo permission"
     fi
 }
 
@@ -70,11 +72,10 @@ install_ssh_key() {
         echo "$SSH_PUB_KEY" >> $SSH_CONFIG_FILE
     fi
 }
-install_ssh_key
 
 # 2. 安装常用软件
 install_common_softwares() {
-    
+
     mkdir -p "$USER_HOME/software"
     mkdir -p "$USER_HOME/code"
     mkdir -p "$USER_HOME/code/java"
@@ -87,13 +88,12 @@ install_common_softwares() {
     # 安装软件
     sudo pacman -S --needed --noconfirm "${BASIC_PACKAGES[@]}" >/dev/null 2>&1
 }
-install_common_softwares
 
 
 # 3. 安装Fish
 install_fish() {
     if [ -f $FISH_CONFIG_FILE ]; then
-        info "Fish已安装, 跳过安装"
+        info "3. Fish已安装, 跳过安装"
         return
     fi
 
@@ -116,7 +116,6 @@ install_fish() {
     fish -c "alias shutdown 'sudo shutdown -h now'; funcsave shutdown" > /dev/null 2>&1
     fish -c "alias reboot 'sudo reboot'; funcsave reboot" > /dev/null 2>&1
 }
-install_fish
 
 
 install_davfs() {
@@ -130,7 +129,6 @@ install_davfs() {
     fish -c "alias mount 'sudo mount -t davfs http://192.168.100.129:5005/ /mnt/dav'; funcsave mount" > /dev/null 2>&1
     fish -c "alias umount 'sudo umount /mnt/dav'; funcsave umount" > /dev/null 2>&1
 }
-install_davfs
 
 
 install_git() {
@@ -142,9 +140,8 @@ install_git() {
     git config --global user.email "liuzibo1925@outlook.com"
 
 }
-install_git
 
-# 5. 安装并配置Clash服务
+#安装并配置Clash服务
 install_clash() {
 
     sudo pacman -S --needed --noconfirm clash >/dev/null 2>&1
@@ -165,11 +162,13 @@ WantedBy=multi-user.target
 EOF
     sudo mv "$TEMP_FILE" "$SERVICE_DIR"
     # sudo systemctl enable clash.service >/dev/null 2>&1
+}
 
+install_proxy() {
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
 function proxy
-    set -xg ALL_PROXY http://127.0.0.1:7890
+    set -xg ALL_PROXY http://192.168.235.1:7897
 end
 
 function noproxy
@@ -178,7 +177,7 @@ end
 EOF
     fi
 }
-install_clash
+
 
 install_docker() {
 
@@ -203,7 +202,6 @@ EOF
     sudo systemctl enable docker.socket >/dev/null 2>&1
 
 }
-install_docker
 
 
 install_mariadb() {
@@ -234,10 +232,9 @@ install_mariadb() {
     sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'%';"
     sudo mariadb -u root -p201654 -e "FLUSH PRIVILEGES;"
 }
-install_mariadb
 
 install_nginx() {
-    
+
     if [ -d "/etc/nginx" ]; then
         info "Nginx已安装, 跳过安装"
         return
@@ -250,7 +247,6 @@ install_nginx() {
     sudo systemctl enable nginx.service >/dev/null 2>&1
     sudo systemctl start nginx.service >/dev/null 2>&1
 }
-install_nginx
 
 
 install_go() {
@@ -262,7 +258,36 @@ install_go() {
     go env -w GOPROXY=https://goproxy.cn,direct
     go env -w GOPATH=/home/liuzibo/code/go
 }
-install_go
+
+
+install_opencode(){
+
+    sudo pacman -S --needed --noconfirm opencode >/dev/null 2>&1
+    # 设置API
+    sudo mkdir -p $USER_HOME/.config/opencode/
+
+    cat > $USER_HOME/.config/opencode/opencode.json << EOF
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "baidu/glm-5.1",
+  "provider": {
+    "baidu": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Baidu",
+      "options": {
+        "baseURL": "https://qianfan.baidubce.com/v2"
+      },
+      "models": {
+        "glm-5.1": {
+          "name": "GLM 5.1"
+        }
+      }
+    }
+  }
+}
+EOF
+}
+
 
 
 install_miniconda() {
@@ -295,4 +320,34 @@ install_miniconda() {
     # 清理临时文件
     rm -rf "$TMP_DIR"
 }
-install_miniconda
+
+
+main() {
+    check_sudo
+    info "1. Install SSH key"
+    install_ssh_key
+    info "2. Install common softwares"
+    install_common_softwares
+    info "3. Install Fish"
+    install_fish
+    info "4. Install Davfs"
+    install_davfs
+    info "5. Install Git"
+    install_git
+    info "6. Install Clash"
+    # install_clash
+    info "7. Install Proxy"
+    install_docker
+    info "8. Install MariaDB"
+    install_mariadb
+    info "9. Install Nginx"
+    install_nginx
+    info "10. Install Go"
+    install_go
+    info "11. Install OpenCode"
+    install_opencode
+    info "12. Install Miniconda"
+    install_miniconda
+}
+
+main
