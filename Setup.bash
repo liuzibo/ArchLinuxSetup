@@ -40,6 +40,8 @@ SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
 
 OPENCODE_CONFIG_FILE="$USER_HOME/.config/opencode/opencode.json"
 
+FRPC_CONFIG_FILE="$USER_HOME/software/frpc/frpc.toml"
+
 
 
 # 检查sudo权限
@@ -289,6 +291,46 @@ EOF
 }
 
 
+install_frpc() {
+
+    mkdir -p "$USER_HOME/software/frpc"
+
+    local TEMP_FILE="/tmp/frpc.service"
+    local SERVICE_DIR="/etc/systemd/system/"
+
+    cat > "$FRPC_CONFIG_FILE" << EOF
+serverAddr = "123.57.175.213"
+serverPort = 7000
+
+[[proxies]]
+name = "Arch10022"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 22
+remotePort = 10022
+EOF
+
+
+    cat > "$TEMP_FILE" << EOF
+[Unit]
+Description = frp client
+After = network.target syslog.target
+Wants = network.target
+
+[Service]
+Type = simple
+ExecStart = /home/liuzibo/software/frpc/frpc -c /home/liuzibo/software/frpc/frpc.toml
+Restart = on-failure
+RestartSec = 30
+
+
+[Install]
+WantedBy = multi-user.target
+EOF
+    sudo mv "$TEMP_FILE" "$SERVICE_DIR"
+}
+
+
 
 install_miniconda() {
 
@@ -331,7 +373,7 @@ main() {
     info "3. Install Fish"
     install_fish
     info "4. Install Davfs"
-    install_davfs
+    # install_davfs
     info "5. Install Git"
     install_git
     info "6. Install Clash"
@@ -346,7 +388,9 @@ main() {
     install_go
     info "11. Install OpenCode"
     install_opencode
-    info "12. Install Miniconda"
+    info "12. Install Frpc"
+    install_frpc
+    info "13. Install Miniconda"
     install_miniconda
 }
 
