@@ -193,8 +193,8 @@ install_docker() {
     sudo cat > $TEMP_FILE << EOF
 {
     "proxies": {
-        "http-proxy": "http://127.0.0.1:7890",
-        "https-proxy": "http://127.0.0.1:7890"
+        "http-proxy": "http://192.168.235.1:7897",
+        "https-proxy": "http://192.168.235.1:7897"
     }
 }
 EOF
