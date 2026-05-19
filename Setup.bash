@@ -201,7 +201,7 @@ EOF
     sudo mv $TEMP_FILE /etc/docker/daemon.json
 
     # 设置开机自启
-    sudo systemctl enable docker.socket >/dev/null 2>&1
+    sudo systemctl enable docker.service >/dev/null 2>&1
 
 }
 
@@ -378,6 +378,7 @@ main() {
     install_git
     info "6. Install Clash"
     # install_clash
+    install_proxy
     info "7. Install Proxy"
     install_docker
     info "8. Install MariaDB"
