@@ -26,9 +26,9 @@ error() {
 
 
 # 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM7ZRY5p7YOXqaqCelSQUmo05+EKkhgL70Q6l3dQAIDh liuzibo@DESKTOP-7JL03RK"
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJjnaOtJZbiXw/Y3haizfje//ItQwSM1YICuViu+HBj6 liuzibo@DESKTOP-DKHHND8"
 
-BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop")
+BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop" "python" "python-pip" "nodejs" "npm")
 
 
 # 定义路径常量
@@ -379,7 +379,7 @@ main() {
     info "6. Install Clash"
     # install_clash
     install_proxy
-    info "7. Install Proxy"
+    info "7. Install Docker"
     install_docker
     info "8. Install MariaDB"
     install_mariadb
