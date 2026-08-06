@@ -56,9 +56,9 @@ check_sudo() {
 # ===================== 功能函数 =====================
 install_ssh_key() {
 
-    sudo pacman -Syu --noconfirm >/dev/null 2>&1
-    sudo pacman -S --needed --noconfirm openssh >/dev/null 2>&1
-    sudo systemctl enable sshd >/dev/null 2>&1
+    # sudo pacman -Syu --noconfirm >/dev/null 2>&1
+    # sudo pacman -S --needed --noconfirm openssh >/dev/null 2>&1
+    # sudo systemctl enable sshd >/dev/null 2>&1
 
     # 创建SSH目录
     mkdir -p "$USER_HOME/.ssh" 
