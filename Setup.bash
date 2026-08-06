@@ -26,7 +26,7 @@ error() {
 
 
 # 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJjnaOtJZbiXw/Y3haizfje//ItQwSM1YICuViu+HBj6 liuzibo@DESKTOP-DKHHND8"
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID6vVcK+0EXNii7jX8KgLxV+zQeHmQCaPGUZH+zkocCi liuzibo@DESKTOP-V2MCGHJ"
 
 BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop" "python" "python-pip" "nodejs" "npm")
 
@@ -170,7 +170,7 @@ install_proxy() {
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
 function proxy
-    set -xg ALL_PROXY http://192.168.235.1:7897
+    set -xg ALL_PROXY http://192.168.223.1:7897
 end
 
 function noproxy
@@ -193,8 +193,8 @@ install_docker() {
     sudo cat > $TEMP_FILE << EOF
 {
     "proxies": {
-        "http-proxy": "http://192.168.235.1:7897",
-        "https-proxy": "http://192.168.235.1:7897"
+        "http-proxy": "http://192.168.223.1:7897",
+        "https-proxy": "http://192.168.223.1:7897"
     }
 }
 EOF
@@ -271,17 +271,17 @@ install_opencode(){
     cat > $USER_HOME/.config/opencode/opencode.json << EOF
 {
   "\$schema": "https://opencode.ai/config.json",
-  "model": "baidu/glm-5.1",
+  "model": "baidu/glm-5.2",
   "provider": {
     "baidu": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Baidu",
       "options": {
-        "baseURL": "https://qianfan.baidubce.com/v2"
+        "baseURL": "http://127.0.0.1:3000/v1"
       },
       "models": {
-        "glm-5.1": {
-          "name": "GLM 5.1"
+        "glm-5.2": {
+          "name": "GLM 5.2"
         }
       }
     }
@@ -390,7 +390,7 @@ main() {
     info "11. Install OpenCode"
     install_opencode
     info "12. Install Frpc"
-    install_frpc
+    # install_frpc
     info "13. Install Miniconda"
     install_miniconda
 }
