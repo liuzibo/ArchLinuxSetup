@@ -132,7 +132,7 @@ install_proxy() {
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
         cat >> $FISH_CONFIG_FILE << EOF
 function proxy
-    set -xg ALL_PROXY http://192.168.223.1:7897
+    set -xg ALL_PROXY http://192.168.77.1:7897
 end
 
 function noproxy
