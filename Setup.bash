@@ -50,10 +50,9 @@ check_sudo() {
         error "No sudo permission"
     fi
 }
+check_sudo
 
 
-
-# ===================== 功能函数 =====================
 install_ssh_key() {
 
     # 创建SSH目录
@@ -70,8 +69,10 @@ install_ssh_key() {
         echo "$SSH_PUB_KEY" >> $SSH_CONFIG_FILE
     fi
 }
+info "1. Install SSH key"
+install_ssh_key
 
-# 2. 安装常用软件
+
 install_common_softwares() {
 
     mkdir -p "$USER_HOME/software"
@@ -83,9 +84,10 @@ install_common_softwares() {
     # 安装软件
     sudo pacman -S --needed --noconfirm "${BASIC_PACKAGES[@]}" >/dev/null 2>&1
 }
+info "2. Install common softwares"
+install_common_softwares
 
 
-# 3. 安装Fish
 install_fish() {
     if [ -f $FISH_CONFIG_FILE ]; then
         info "3. Fish已安装, 跳过安装"
@@ -111,7 +113,8 @@ install_fish() {
     fish -c "alias shutdown 'sudo shutdown -h now'; funcsave shutdown" > /dev/null 2>&1
     fish -c "alias reboot 'sudo reboot'; funcsave reboot" > /dev/null 2>&1
 }
-
+info "3. Install Fish"
+install_fish
 
 install_git() {
 
@@ -122,6 +125,9 @@ install_git() {
     git config --global user.email "liuzibo1925@outlook.com"
 
 }
+info "5. Install Git"
+install_git
+
 
 install_proxy() {
     if [ ! -f $FISH_CONFIG_FILE ] || ! grep -q "function proxy" $FISH_CONFIG_FILE; then
@@ -136,7 +142,8 @@ end
 EOF
     fi
 }
-
+info "6. Install Proxy"
+install_proxy
 
 install_go() {
 
@@ -147,7 +154,8 @@ install_go() {
     go env -w GOPROXY=https://goproxy.cn,direct
     go env -w GOPATH=/home/liuzibo/code/go
 }
-
+info "10. Install Go"
+install_go
 
 install_opencode(){
 
@@ -176,7 +184,8 @@ install_opencode(){
 }
 EOF
 }
-
+info "11. Install OpenCode"
+install_opencode
 
 install_miniconda() {
 
@@ -208,37 +217,6 @@ install_miniconda() {
     # 清理临时文件
     rm -rf "$TMP_DIR"
 }
+info "13. Install Miniconda"
+install_miniconda
 
-
-main() {
-    check_sudo
-    info "1. Install SSH key"
-    install_ssh_key
-    info "2. Install common softwares"
-    install_common_softwares
-    info "3. Install Fish"
-    install_fish
-    info "4. Install Davfs"
-    # install_davfs
-    info "5. Install Git"
-    install_git
-    info "6. Install Clash"
-    # install_clash
-    install_proxy
-    info "7. Install Docker"
-    install_docker
-    info "8. Install MariaDB"
-    install_mariadb
-    info "9. Install Nginx"
-    install_nginx
-    info "10. Install Go"
-    install_go
-    info "11. Install OpenCode"
-    install_opencode
-    info "12. Install Frpc"
-    # install_frpc
-    info "13. Install Miniconda"
-    install_miniconda
-}
-
-main
