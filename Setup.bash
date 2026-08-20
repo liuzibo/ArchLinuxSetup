@@ -56,10 +56,6 @@ check_sudo() {
 # ===================== 功能函数 =====================
 install_ssh_key() {
 
-    # sudo pacman -Syu --noconfirm >/dev/null 2>&1
-    # sudo pacman -S --needed --noconfirm openssh >/dev/null 2>&1
-    # sudo systemctl enable sshd >/dev/null 2>&1
-
     # 创建SSH目录
     mkdir -p "$USER_HOME/.ssh" 
 
@@ -117,19 +113,6 @@ install_fish() {
 }
 
 
-install_davfs() {
-    sudo pacman -S --needed --noconfirm davfs2 >/dev/null 2>&1
-
-    if ! sudo grep -q "http://192.168.100.129:5005/ liuzibo Aliu1019zeber." /etc/davfs2/secrets; then
-        echo "http://192.168.100.129:5005/ liuzibo Aliu1019zeber." | sudo tee -a /etc/davfs2/secrets > /dev/null 2>&1
-    fi
-
-    sudo mkdir -p /mnt/dav
-    fish -c "alias mount 'sudo mount -t davfs http://192.168.100.129:5005/ /mnt/dav'; funcsave mount" > /dev/null 2>&1
-    fish -c "alias umount 'sudo umount /mnt/dav'; funcsave umount" > /dev/null 2>&1
-}
-
-
 install_git() {
 
     sudo pacman -S --needed --noconfirm git >/dev/null 2>&1
@@ -138,29 +121,6 @@ install_git() {
     git config --global user.name "liuzibo"
     git config --global user.email "liuzibo1925@outlook.com"
 
-}
-
-#安装并配置Clash服务
-install_clash() {
-
-    sudo pacman -S --needed --noconfirm clash >/dev/null 2>&1
-
-    local TEMP_FILE="/tmp/clash.service"
-    local SERVICE_DIR="/etc/systemd/system/"
-
-    cat > "$TEMP_FILE" << EOF
-[Unit]
-Description=clash
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/clash -d /home/liuzibo/.config/clash/
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    sudo mv "$TEMP_FILE" "$SERVICE_DIR"
-    # sudo systemctl enable clash.service >/dev/null 2>&1
 }
 
 install_proxy() {
@@ -175,76 +135,6 @@ function noproxy
 end
 EOF
     fi
-}
-
-
-install_docker() {
-
-    # 安装Docker
-    sudo pacman -S --needed --noconfirm docker >/dev/null 2>&1    
-
-    # 添加Docker配置
-    sudo mkdir -p /etc/docker
-    local TEMP_FILE="/tmp/daemon.json"
-
-    sudo cat > $TEMP_FILE << EOF
-{
-    "proxies": {
-        "http-proxy": "http://192.168.223.1:7897",
-        "https-proxy": "http://192.168.223.1:7897"
-    }
-}
-EOF
-    sudo mv $TEMP_FILE /etc/docker/daemon.json
-
-    # 设置开机自启
-    sudo systemctl enable docker.service >/dev/null 2>&1
-
-}
-
-
-install_mariadb() {
-
-    if [ -d "/var/lib/mysql" ]; then
-        info "MariaDB已安装, 跳过安装"
-        return
-    fi
-
-    # 安装MariaDB
-    sudo pacman -S --needed --noconfirm mariadb >/dev/null 2>&1    
-
-    # 设置数据库文件夹不可压缩
-    sudo chattr +C /var/lib/mysql >/dev/null 2>&1
-
-    # 初始化数据库
-    sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql >/dev/null 2>&1
-
-    # 设置开机自启
-    sudo systemctl enable mariadb.service > /dev/null 2>&1
-    sudo systemctl start mariadb.service > /dev/null 2>&1
-
-    # 配置用户
-
-    sudo mariadb -u root -p201654 -e "CREATE USER 'liuzibo'@'localhost' IDENTIFIED BY '201654';"
-    sudo mariadb -u root -p201654 -e "CREATE USER 'liuzibo'@'%' IDENTIFIED BY '201654';"
-    sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'localhost';"
-    sudo mariadb -u root -p201654 -e "GRANT ALL PRIVILEGES ON *.* TO 'liuzibo'@'%';"
-    sudo mariadb -u root -p201654 -e "FLUSH PRIVILEGES;"
-}
-
-install_nginx() {
-
-    if [ -d "/etc/nginx" ]; then
-        info "Nginx已安装, 跳过安装"
-        return
-    fi
-
-    # 安装Nginx
-    sudo pacman -S --needed --noconfirm nginx-mainline >/dev/null 2>&1    
-
-    # 设置开机自启
-    sudo systemctl enable nginx.service >/dev/null 2>&1
-    sudo systemctl start nginx.service >/dev/null 2>&1
 }
 
 
@@ -286,47 +176,6 @@ install_opencode(){
 }
 EOF
 }
-
-
-install_frpc() {
-
-    mkdir -p "$USER_HOME/software/frpc"
-
-    local TEMP_FILE="/tmp/frpc.service"
-    local SERVICE_DIR="/etc/systemd/system/"
-
-    cat > "$FRPC_CONFIG_FILE" << EOF
-serverAddr = "123.57.175.213"
-serverPort = 7000
-
-[[proxies]]
-name = "Arch10022"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 22
-remotePort = 10022
-EOF
-
-
-    cat > "$TEMP_FILE" << EOF
-[Unit]
-Description = frp client
-After = network.target syslog.target
-Wants = network.target
-
-[Service]
-Type = simple
-ExecStart = /home/liuzibo/software/frpc/frpc -c /home/liuzibo/software/frpc/frpc.toml
-Restart = on-failure
-RestartSec = 30
-
-
-[Install]
-WantedBy = multi-user.target
-EOF
-    sudo mv "$TEMP_FILE" "$SERVICE_DIR"
-}
-
 
 
 install_miniconda() {
