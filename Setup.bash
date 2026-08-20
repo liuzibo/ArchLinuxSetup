@@ -40,8 +40,6 @@ SSH_CONFIG_FILE="$USER_HOME/.ssh/authorized_keys"
 
 OPENCODE_CONFIG_FILE="$USER_HOME/.config/opencode/opencode.json"
 
-FRPC_CONFIG_FILE="$USER_HOME/software/frpc/frpc.toml"
-
 
 
 # 检查sudo权限
