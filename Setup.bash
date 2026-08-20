@@ -80,10 +80,7 @@ install_common_softwares() {
 
     mkdir -p "$USER_HOME/software"
     mkdir -p "$USER_HOME/code"
-    mkdir -p "$USER_HOME/code/java"
     mkdir -p "$USER_HOME/code/go"
-    mkdir -p "$USER_HOME/code/oss"
-    mkdir -p "$USER_HOME/code/setup"
 
     sudo pacman -Syu --noconfirm >/dev/null 2>&1
 
