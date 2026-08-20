@@ -116,6 +116,7 @@ install_fish() {
 info "3. Install Fish"
 install_fish
 
+
 install_git() {
 
     sudo pacman -S --needed --noconfirm git >/dev/null 2>&1
@@ -125,7 +126,7 @@ install_git() {
     git config --global user.email "liuzibo1925@outlook.com"
 
 }
-info "5. Install Git"
+info "4. Install Git"
 install_git
 
 
@@ -142,7 +143,7 @@ end
 EOF
     fi
 }
-info "6. Install Proxy"
+info "5. Install Proxy"
 install_proxy
 
 install_go() {
@@ -154,8 +155,9 @@ install_go() {
     go env -w GOPROXY=https://goproxy.cn,direct
     go env -w GOPATH=/home/liuzibo/code/go
 }
-info "10. Install Go"
+info "5. Install Go"
 install_go
+
 
 install_opencode(){
 
@@ -184,8 +186,9 @@ install_opencode(){
 }
 EOF
 }
-info "11. Install OpenCode"
+info "6. Install OpenCode"
 install_opencode
+
 
 install_miniconda() {
 
@@ -217,6 +220,6 @@ install_miniconda() {
     # 清理临时文件
     rm -rf "$TMP_DIR"
 }
-info "13. Install Miniconda"
+info "7. Install Miniconda"
 install_miniconda
 
