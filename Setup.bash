@@ -26,7 +26,7 @@ error() {
 
 
 # 配置项
-SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID6vVcK+0EXNii7jX8KgLxV+zQeHmQCaPGUZH+zkocCi liuzibo@DESKTOP-V2MCGHJ"
+SSH_PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCKAlmyiZFcRjJ9iYWVL4C0MOPEHMiUOCrbn04ugdsN liuzibo@DESKTOP-STCR04C"
 
 BASIC_PACKAGES=("wget" "vim" "screen" "tree" "less" "man" "zip" "unzip" "jdk17-openjdk" "fastfetch" "htop" "python" "python-pip" "nodejs" "npm")
 
